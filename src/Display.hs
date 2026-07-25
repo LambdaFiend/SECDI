@@ -8,12 +8,14 @@ showTerm'' :: Environment -> TermNode -> String
 showTerm'' ctx t =
   case (getTm t, showTerm ctx t) of
     (TmPair _ _, s) -> s
+    (TmUnit, s)     -> s
     (_, s)          -> removeOuterParens s
 
 showTerm' :: TermNode -> String
 showTerm' t =
   case (getTm t, showTerm [] t) of
     (TmPair _ _, s) -> s
+    (TmUnit, s)     -> s
     (_, s)          -> removeOuterParens s
 
 showTerm :: Environment -> TermNode -> String
@@ -47,6 +49,7 @@ showTerm ctx t =
     TmEmptyKnot -> "⊥"
     TmClosure x t1 e -> "(" ++ "λ" ++ x ++ "." ++ showTerm e t1 ++ ")"
     TmLetrec ts t1 -> "(" ++ "letrec " ++ intercalate " and " (map (\(x, y) -> x ++ " = " ++ showTerm ctx y) ts) ++ " in " ++ showTerm ctx t1 ++ ")"
+    TmUnit -> "()"
     TmError e -> "#" ++ e ++ "#"
 
 showFileInfo :: FileInfo -> String

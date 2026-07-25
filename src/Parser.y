@@ -41,6 +41,7 @@ fix      { Token pos FIX }
 "*"      { Token pos MULT }
 "/"      { Token pos DIV }
 ","      { Token pos COMMA }
+"_"      { Token pos UNDERSCORE }
 "\\"     { Token pos LAMBDA }
 "."      { Token pos DOT }
 "("      { Token pos LPAREN }
@@ -82,6 +83,8 @@ Letrec
 Abs
   : Name "." Term        { TermNode (fst $1) (TmAbs (snd $1) $3) }
   | Name Abs             { TermNode (fst $1) (TmAbs (snd $1) $2) }
+  | "_" "." Term         { TermNode (tokenPos $1) (TmAbs "_" $3) }
+  | "_" Abs              { TermNode (tokenPos $1) (TmAbs "_" $2) }
   | AbsPattern1 "." Term { $1 $3 }
 
 AbsPattern1 :: { TermNode -> TermNode }
@@ -142,13 +145,14 @@ Var : Name { TermNode (fst $1) (TmVar (snd $1)) }
 Name : id { (tokenPos $1, (\(ID s) -> s) (tokenDat $1)) }
 
 Value
-  : int   { TermNode (tokenPos $1) (TmInt ((\(LITINT n) -> n) (tokenDat $1))) }
-  | true  { TermNode (tokenPos $1) (TmBool True) }
-  | false { TermNode (tokenPos $1) (TmBool False) }
-  | fst   { TermNode (tokenPos $1) TmFst }
-  | snd   { TermNode (tokenPos $1) TmSnd }
-  | not   { TermNode (tokenPos $1) TmNot }
-  | fix   { TermNode (tokenPos $1) TmFix }
+  : int     { TermNode (tokenPos $1) (TmInt ((\(LITINT n) -> n) (tokenDat $1))) }
+  | true    { TermNode (tokenPos $1) (TmBool True) }
+  | false   { TermNode (tokenPos $1) (TmBool False) }
+  | fst     { TermNode (tokenPos $1) TmFst }
+  | snd     { TermNode (tokenPos $1) TmSnd }
+  | not     { TermNode (tokenPos $1) TmNot }
+  | fix     { TermNode (tokenPos $1) TmFix }
+  | "(" ")" { TermNode (tokenPos $1) TmUnit }
 
 Pair : "(" Term "," PairMany ")" { TermNode (tokenPos $1) (TmPair $2 $4) }
 

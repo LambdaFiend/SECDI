@@ -44,6 +44,7 @@ data Term
   | TmEmptyKnot
   | TmClosure Name TermNode Environment
   | TmLetrec [(Name, TermNode)] TermNode
+  | TmUnit
   | TmError String
   deriving (Eq, Show)
 
@@ -105,3 +106,42 @@ emptySECD = (EmptyStack, [], EmptyControl, EmptyDump)
 
 createSECD :: TermNode -> SECD
 createSECD t = (EmptyStack, [], TermControl t EmptyControl, EmptyDump)
+
+type NameContext = [Name]
+
+findFreeVars :: NameContext -> TermNode -> Maybe NameContext
+findFreeVars ctx t =
+  case getTm t of
+    TmVar x -> if elem x ctx then Nothing else Just [x]
+    TmAbs x t1 -> findFreeVars (x : ctx) t1
+    TmApp t1 t2 -> findFreeVars ctx t1 <> findFreeVars ctx t2
+    TmIf t1 t2 t3 -> findFreeVars ctx t1 <> findFreeVars ctx t2 <> findFreeVars ctx t3
+    TmFix -> Nothing
+    TmAnd t1 t2 -> findFreeVars ctx t1 <> findFreeVars ctx t2
+    TmOr t1 t2 -> findFreeVars ctx t1 <> findFreeVars ctx t2
+    TmEq t1 t2 -> findFreeVars ctx t1 <> findFreeVars ctx t2
+    TmNE t1 t2 -> findFreeVars ctx t1 <> findFreeVars ctx t2
+    TmLT t1 t2 -> findFreeVars ctx t1 <> findFreeVars ctx t2
+    TmGT t1 t2 -> findFreeVars ctx t1 <> findFreeVars ctx t2
+    TmLE t1 t2 -> findFreeVars ctx t1 <> findFreeVars ctx t2
+    TmGE t1 t2 -> findFreeVars ctx t1 <> findFreeVars ctx t2
+    TmPlus t1 t2 -> findFreeVars ctx t1 <> findFreeVars ctx t2
+    TmSub t1 t2 -> findFreeVars ctx t1 <> findFreeVars ctx t2
+    TmMult t1 t2 -> findFreeVars ctx t1 <> findFreeVars ctx t2
+    TmDiv t1 t2 -> findFreeVars ctx t1 <> findFreeVars ctx t2
+    TmNot -> Nothing
+    TmInt _ -> Nothing
+    TmBool _ -> Nothing
+    TmPair t1 t2 -> findFreeVars ctx t1 <> findFreeVars ctx t2
+    TmFst -> Nothing
+    TmSnd -> Nothing
+    TmTyingTheKnot x t1 e -> findFreeVars ([x] ++ map fst e ++ ctx) t1
+    TmEmptyKnot -> Nothing
+    TmClosure x t1 e -> findFreeVars ([x] ++ map fst e ++ ctx) t1
+    TmLetrec ts t1 -> (\x -> if x == [] then Nothing else Just x) (concat $ helperFun (map (\(x, y) -> findFreeVars ([x] ++ map fst ts ++ ctx) y) ts)) <> findFreeVars (map fst ts ++ ctx) t1
+    TmUnit -> Nothing
+    TmError _ -> Nothing
+  where
+    helperFun []             = []
+    helperFun (Just x : xs)  = x : helperFun xs
+    helperFun (Nothing : xs) = helperFun xs
