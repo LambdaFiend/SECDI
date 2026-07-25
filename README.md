@@ -52,9 +52,11 @@ Binary operators are required to be one of the following: +, \-, \*, /, &&, ||, 
 
 The binary operators || and && use short-circuit evaluation.
 
-Binary operators require both operands to be of the same "type". Although this language is untyped, the same "type" here means: both operands evaluate to integers, both operands evaluate to booleans or both operands evaluate to units.
+Binary operators require both operands to be of the same "type". Although this language is untyped, the same "type" here means: both operands evaluate to integers, both operands evaluate to booleans or both operands evaluate to units. This is only checked during evaluation, so "type" errors are not always caught.
 
 Functions are treated as values.
+
+Some (10) examples can be found within programs/default_tests.txt.
 
 ## Reporting issues
 
