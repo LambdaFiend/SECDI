@@ -38,6 +38,8 @@ Type ```:?```, ```:h``` or ```:help``` for help within the program.
 | letrec f x = t1 and g y = t2 and ... in tn | A let-binding for mutually recursive functions, such that f appears bound in every t1, t2, ..., tn |
 | Y | The Y combinator, useful for recursive definitions |
 
+SECDI is an untyped language.
+
 Every let, letrec, where, whererec definition can include a function as follows: let f x y = x + y in f 2 3, which evaluates to 5.
 
 The definition of letrec and whererec must be that of a function, so at least one function argument must be given: letrec f x = x + 1 in f 4, which evaluates to 5.
@@ -51,6 +53,8 @@ Binary operators are required to be one of the following: +, \-, \*, /, &&, ||, 
 The binary operators || and && use short-circuit evaluation.
 
 Binary operators require both operands to be of the same "type". Although this language is untyped, the same "type" here means: both operands evaluate to integers, both operands evaluate to booleans or both operands evaluate to units.
+
+Functions are treated as values.
 
 ## Reporting issues
 
