@@ -1,0 +1,56 @@
+cabal-version: 3.0
+name:          SECDI
+version:       0.1.0.0
+synopsis:      A SECD Interpreter.
+
+description:
+  A SECD interpreter made for experimentation implenting functional abstract machines.
+
+homepage:     https://github.com/LambdaFiend/SECDI
+license:      BSD-3-Clause
+license-file: LICENSE
+author:       Lambda Fiend
+maintainer:   thelambdafiend@gmail.com
+
+--copyright:
+
+category:   Language
+build-type: Simple
+
+extra-doc-files:
+  CHANGELOG.md
+  README.md
+
+--extra-source-files:
+
+common warnings
+  --ghc-options: 
+
+executable PLCI
+  import:         warnings
+  main-is:        Main.hs
+  hs-source-dirs: src
+
+  other-modules:
+    Lexer,
+    Parser,
+    Syntax,
+    Display,
+    Evaluation
+
+  --other-extensions:
+
+  build-depends:
+    base ^>=4.20.2.0,
+    array ^>=0.5.8.0,
+    directory ^>=1.3.10.1,
+    ansi-terminal ^>=1.1.5,
+    haskeline ^>=0.8.2.1
+
+  hs-source-dirs:
+    app
+    src
+
+  default-language: Haskell2010
+
+  --default-extensions:
