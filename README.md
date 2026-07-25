@@ -3,7 +3,7 @@
 
 ## Introducing
 
-An implementation of a SECD interpreter as per Lawrence Paulson's Foundations of Functional Programming \[2022\].
+An implementation of a SECD interpreter as per **Lawrence Paulson's Foundations of Functional Programming \[2022\]**.
 
 ## Running the program
 
