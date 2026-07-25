@@ -36,7 +36,8 @@ executable PLCI
     Parser,
     Syntax,
     Display,
-    Evaluation
+    Evaluation,
+    GPL
 
   --other-extensions:
 
