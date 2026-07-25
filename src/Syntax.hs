@@ -51,8 +51,8 @@ type SECD = (Stack, Environment, Control, Dump)
 
 data Instruction
   = InstrApp
-  | InstrAnd
-  | InstrOr
+  | InstrAnd TermNode
+  | InstrOr TermNode
   | InstrEq
   | InstrNE
   | InstrLT

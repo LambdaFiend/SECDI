@@ -12,8 +12,8 @@ eval1 m =
     (s, e, TermControl v@(TermNode _ (TmInt _)) c, d) -> Right (ValueStack v s, e, c, d)
     (s, e, TermControl v@(TermNode _ (TmBool _)) c, d) -> Right (ValueStack v s, e, c, d)
     (s, e, TermControl (TermNode _ (TmPair t1 t2)) c, d) -> Right (s, e, TermControl t1 (TermControl t2 (InstructionControl InstrPair c)), d)
-    (s, e, TermControl (TermNode _ (TmAnd t1 t2)) c, d) -> Right (s, e, TermControl t1 (TermControl t2 (InstructionControl InstrAnd c)), d)
-    (s, e, TermControl (TermNode _ (TmOr t1 t2)) c, d) -> Right (s, e, TermControl t1 (TermControl t2 (InstructionControl InstrOr c)), d)
+    (s, e, TermControl (TermNode _ (TmAnd t1 t2)) c, d) -> Right (s, e, TermControl t1 (InstructionControl (InstrAnd t2) c), d)
+    (s, e, TermControl (TermNode _ (TmOr t1 t2)) c, d) -> Right (s, e, TermControl t1 (InstructionControl (InstrOr t2) c), d)
     (s, e, TermControl (TermNode _ (TmEq t1 t2)) c, d) -> Right (s, e, TermControl t1 (TermControl t2 (InstructionControl InstrEq c)), d)
     (s, e, TermControl (TermNode _ (TmNE t1 t2)) c, d) -> Right (s, e, TermControl t1 (TermControl t2 (InstructionControl InstrNE c)), d)
     (s, e, TermControl (TermNode _ (TmLT t1 t2)) c, d) -> Right (s, e, TermControl t1 (TermControl t2 (InstructionControl InstrLT c)), d)
@@ -26,6 +26,14 @@ eval1 m =
     (s, e, TermControl (TermNode _ (TmDiv t1 t2)) c, d) -> Right (s, e, TermControl t1 (TermControl t2 (InstructionControl InstrDiv c)), d)
     (s, e, TermControl (TermNode _ (TmIf t1 t2 t3)) c, d) -> Right (s, e, TermControl t1 (InstructionControl (InstrIf t2 t3) c), d)
     (s, e, TermControl (TermNode _ (TmLetrec ts t1)) c, d) -> Right (EmptyStack, letrecEnvKnot e (zip (map fst ts) (map letrecKnot (map snd ts))), TermControl t1 EmptyControl, NonEmptyDump s e c d)
+    (ValueStack (TermNode fi1 (TmBool b)) s, e, InstructionControl (InstrAnd t2) c, d) ->
+      if b
+        then Right (s, e, TermControl t2 c, d)
+        else Right (ValueStack (TermNode fi1 (TmBool False)) s, e, c, d)
+    (ValueStack (TermNode fi1 (TmBool b)) s, e, InstructionControl (InstrOr t2) c, d) ->
+      if b
+        then Right (ValueStack (TermNode fi1 (TmBool True)) s, e, c, d)
+        else Right (s, e, TermControl t2 c, d)
     (ValueStack (TermNode _ (TmBool b)) s, e, InstructionControl (InstrIf t1 t2) c, d) -> Right (s, e, TermControl (if b then t1 else t2) c, d)
     (s, e, TermControl (TermNode _ (TmApp (TermNode _ TmFix) (TermNode _ (TmAbs f (TermNode _ (TmAbs x t1)))))) c, d) -> Right (ClosureStack x t1 ((f, TermNode noPos TmEmptyKnot) : e) s, e, c, d)
     (s, e, TermControl (TermNode _ TmFix) c, d) -> Right (s, e, TermControl yCombSubst c, d)
@@ -65,29 +73,25 @@ yCombSubst :: TermNode
 yCombSubst = TermNode noPos (TmAbs "f" (TermNode noPos (TmApp (TermNode noPos (TmAbs "x" (TermNode noPos (TmApp (TermNode noPos (TmVar "f")) (TermNode noPos (TmAbs "y" (TermNode noPos (TmApp (TermNode noPos (TmApp (TermNode noPos (TmVar "x")) (TermNode noPos (TmVar "x")))) (TermNode noPos (TmVar "y")))))))))) (TermNode noPos (TmAbs "x" (TermNode noPos (TmApp (TermNode noPos (TmVar "f")) (TermNode noPos (TmAbs "y" (TermNode noPos (TmApp (TermNode noPos (TmApp (TermNode noPos (TmVar "x")) (TermNode noPos (TmVar "x")))) (TermNode noPos (TmVar "y")))))))))))))
 
 hasFun2 :: Instruction -> TermNode -> TermNode -> Bool
-hasFun2 InstrAnd (TermNode _ (TmBool _)) (TermNode _ (TmBool _)) = True
-hasFun2 InstrOr (TermNode _ (TmBool _)) (TermNode _ (TmBool _))  = True
-hasFun2 InstrEq (TermNode _ (TmInt _)) (TermNode _ (TmInt _))    = True
-hasFun2 InstrNE (TermNode _ (TmInt _)) (TermNode _ (TmInt _))    = True
-hasFun2 InstrLT (TermNode _ (TmInt _)) (TermNode _ (TmInt _))    = True
-hasFun2 InstrGT (TermNode _ (TmInt _)) (TermNode _ (TmInt _))    = True
-hasFun2 InstrLE (TermNode _ (TmInt _)) (TermNode _ (TmInt _))    = True
-hasFun2 InstrGE (TermNode _ (TmInt _)) (TermNode _ (TmInt _))    = True
-hasFun2 InstrEq (TermNode _ (TmBool _)) (TermNode _ (TmBool _))  = True
-hasFun2 InstrNE (TermNode _ (TmBool _)) (TermNode _ (TmBool _))  = True
-hasFun2 InstrLT (TermNode _ (TmBool _)) (TermNode _ (TmBool _))  = True
-hasFun2 InstrGT (TermNode _ (TmBool _)) (TermNode _ (TmBool _))  = True
-hasFun2 InstrLE (TermNode _ (TmBool _)) (TermNode _ (TmBool _))  = True
-hasFun2 InstrGE (TermNode _ (TmBool _)) (TermNode _ (TmBool _))  = True
-hasFun2 InstrPlus (TermNode _ (TmInt _)) (TermNode _ (TmInt _))  = True
-hasFun2 InstrSub (TermNode _ (TmInt _)) (TermNode _ (TmInt _))   = True
-hasFun2 InstrMult (TermNode _ (TmInt _)) (TermNode _ (TmInt _))  = True
-hasFun2 InstrDiv (TermNode _ (TmInt _)) (TermNode _ (TmInt _))   = True
-hasFun2 _ _ _                                                    = False
+hasFun2 InstrEq (TermNode _ (TmInt _)) (TermNode _ (TmInt _))   = True
+hasFun2 InstrNE (TermNode _ (TmInt _)) (TermNode _ (TmInt _))   = True
+hasFun2 InstrLT (TermNode _ (TmInt _)) (TermNode _ (TmInt _))   = True
+hasFun2 InstrGT (TermNode _ (TmInt _)) (TermNode _ (TmInt _))   = True
+hasFun2 InstrLE (TermNode _ (TmInt _)) (TermNode _ (TmInt _))   = True
+hasFun2 InstrGE (TermNode _ (TmInt _)) (TermNode _ (TmInt _))   = True
+hasFun2 InstrEq (TermNode _ (TmBool _)) (TermNode _ (TmBool _)) = True
+hasFun2 InstrNE (TermNode _ (TmBool _)) (TermNode _ (TmBool _)) = True
+hasFun2 InstrLT (TermNode _ (TmBool _)) (TermNode _ (TmBool _)) = True
+hasFun2 InstrGT (TermNode _ (TmBool _)) (TermNode _ (TmBool _)) = True
+hasFun2 InstrLE (TermNode _ (TmBool _)) (TermNode _ (TmBool _)) = True
+hasFun2 InstrGE (TermNode _ (TmBool _)) (TermNode _ (TmBool _)) = True
+hasFun2 InstrPlus (TermNode _ (TmInt _)) (TermNode _ (TmInt _)) = True
+hasFun2 InstrSub (TermNode _ (TmInt _)) (TermNode _ (TmInt _))  = True
+hasFun2 InstrMult (TermNode _ (TmInt _)) (TermNode _ (TmInt _)) = True
+hasFun2 InstrDiv (TermNode _ (TmInt _)) (TermNode _ (TmInt _))  = True
+hasFun2 _ _ _                                                   = False
 
 applyFun2 :: Instruction -> TermNode -> TermNode -> Maybe TermNode
-applyFun2 InstrAnd (TermNode fi1 (TmBool b1)) (TermNode _ (TmBool b2)) = Just (TermNode fi1 (TmBool (b1 && b2)))
-applyFun2 InstrOr (TermNode fi1 (TmBool b1)) (TermNode _ (TmBool b2)) = Just (TermNode fi1 (TmBool (b1 || b2)))
 applyFun2 InstrEq (TermNode fi1 (TmInt n1)) (TermNode _ (TmInt n2)) = Just (TermNode fi1 (TmBool (n1 == n2)))
 applyFun2 InstrNE (TermNode fi1 (TmInt n1)) (TermNode _ (TmInt n2)) = Just (TermNode fi1 (TmBool (n1 /= n2)))
 applyFun2 InstrLT (TermNode fi1 (TmInt n1)) (TermNode _ (TmInt n2)) = Just (TermNode fi1 (TmBool (n1 < n2)))
