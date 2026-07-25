@@ -6,6 +6,7 @@ import           Data.Char
 import           Data.List
 import           Display
 import           Evaluation
+import           GPL
 import           Lexer
 import           Parser
 import           Syntax
@@ -74,8 +75,10 @@ main :: IO ()
 main = do
   comml <- handleCommHistFile "command_history.txt"
   evaluate (length comml)
+  putStrLn "\nSECDI  Copyright (C) 2026  Lambda Fiend\nThis program comes with ABSOLUTELY NO WARRANTY; for details type `:gplw'.\nThis is free software, and you are welcome to redistribute it\nunder certain conditions; type `:gplc' for details.\n"
   putStrLn "Welcome to SECD Interpreter, SECDI for short"
   putStrLn "Enter :? for help with commands"
+  putStrLn ""
   runInputT customHaskelineSettings (main' [] (reverse (lines comml)))
   return ()
 
@@ -86,6 +89,12 @@ main' env comml = do
   let commToks = (\comm -> case comm of (x : xs) -> map toLower x : xs; [] -> []) $ words command
   env' <- case (commToks) of
     [] -> return env
+    [":gplw"] -> do
+      liftIO $ putStrLn gnuWarranty
+      return env
+    [":gplc"] -> do
+      liftIO $ putStrLn gnuComplete
+      return env
     [eenv, k] | and (map isDigit k) && elem eenv [":ee", ":eenv", ":evalenv"] -> do
       let k' = read k
           env' = drop ((k' - 1) * 10) $ take (k' * 10) env
@@ -542,20 +551,20 @@ getTermFromAST txt = do
       liftIO $ setSGR [SetColor Foreground Vivid Red]
       liftIO $ putStrLn e
       liftIO $ setSGR [Reset]
-      return $ Left ""
+      return (Left "")
     Right (TermNode _ (TmError e)) -> do
-      liftIO $
-        setSGR
-          [SetColor Foreground Vivid Red]
-      liftIO $
-        putStrLn
-          e
-      liftIO $
-        setSGR
-          [Reset]
-      return $
-        Left ""
-    Right t -> return (Right $ createSECD t)
+      liftIO $ setSGR [SetColor Foreground Vivid Red]
+      liftIO $ putStrLn e
+      liftIO $ setSGR [Reset]
+      return (Left "")
+    Right t ->
+      case findFreeVars [] t of
+        Just xs -> do
+          liftIO $ setSGR [SetColor Foreground Vivid Red]
+          liftIO $ putStrLn ("Free variables found in the given term:\n" ++ show xs)
+          liftIO $ setSGR [Reset]
+          return (Left "")
+        Nothing -> return (Right $ createSECD t)
 
 getMultipleASTsFromTerms :: [(String, String)] -> InputT IO [(String, SECD)]
 getMultipleASTsFromTerms [] = return []
