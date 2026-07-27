@@ -40,11 +40,11 @@ Type ```:?```, ```:h``` or ```:help``` for help within the program.
 
 SECDI is an untyped language.
 
+Lambda-abstraction, let, letrec, where and whererec defintiions can use pattern-matching for pairs. For instance: \(x, y).x. Or, for instance, let f (x, y, z) = x + y - z in f (1, 2, 3). Or, finally, for instance: g ((1, 2), (2, 3), (0, 1, 2)) where g ((x, y), (a, b), (c, d, e)) = x + y + a + b + c + d + e. It should be noted that (1, 2, 3) is equivalent to (1, (2, 3)), and \(x, y, z, a).x + y + z + a to \(x, (y, (z, a))).x + y + z + a.
+
 Every let, letrec, where, whererec definition can include a function as follows: let f x y = x + y in f 2 3, which evaluates to 5.
 
-The definition of letrec and whererec must be that of a function, so at least one function argument must be given: letrec f x = x + 1 in f 4, which evaluates to 5.
-
-Free variables are not allowed as input.
+Free variables are not allowed in the input.
 
 The name of variables must begin with a lowercase letter, be followed by any numer of lowercase letters, uppercase letters, underscores and digits, and end in any number of primes.
 
