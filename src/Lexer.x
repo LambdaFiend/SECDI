@@ -48,9 +48,9 @@ Y                              { \pos _ -> Token pos FIX }
 "."                            { \pos _ -> Token pos DOT }
 "("                            { \pos _ -> Token pos LPAREN }
 ")"                            { \pos _ -> Token pos RPAREN }
-($lower)($alphanumunder)*"\'"* { \pos s -> Token pos $ ID s }
+($lower)($alphanumunder|\')*   { \pos s -> Token pos (ID s) }
 $digit+                        { \pos s -> Token pos (LITINT (read s)) }
-.                              { \pos s -> Token pos $ ERROR ("Lexing error: " ++ s) }
+.                              { \pos s -> Token pos (ERROR ("Lexing error: " ++ s)) }
 
 {
 data Token = Token

@@ -47,7 +47,7 @@ showTerm ctx t =
     TmSnd -> "snd"
     TmTyingTheKnot _ _ _ -> "·"
     TmEmptyKnot -> "⊥"
-    TmClosure x t1 e -> "(" ++ "λ" ++ x ++ "." ++ showTerm e t1 ++ ")"
+    TmClosure x t1 e -> "(" ++ "λ" ++ x ++ "." ++ showControl e t1 ++ ")"
     TmLetrec ts t1 -> "(" ++ "letrec " ++ intercalate " and " (map (\(x, y) -> x ++ " = " ++ showTerm ctx y) ts) ++ " in " ++ showTerm ctx t1 ++ ")"
     TmUnit -> "()"
     TmError e -> "#" ++ e ++ "#"
@@ -81,7 +81,7 @@ showSECD (s, e, c, d) = "(" ++ showStack s ++ ", " ++ showEnvironment e ++ ", " 
 
 showStack :: Stack -> String
 showStack EmptyStack = "•"
-showStack (ClosureStack x t e s) = "Clo(" ++ x ++ ", " ++ showTerm' t ++ ", " ++ showEnvironment e ++ ")" ++ "; " ++ showStack s
+showStack (ClosureStack x t e s) = "Clo(" ++ x ++ ", " ++ showControl e t ++ ", " ++ showEnvironment e ++ ")" ++ "; " ++ showStack s
 showStack (ValueStack t s) = showTerm' t ++ "; " ++ showStack s
 
 showEnvironment :: Environment -> String

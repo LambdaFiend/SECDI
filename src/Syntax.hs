@@ -40,9 +40,9 @@ data Term
   | TmPair TermNode TermNode
   | TmFst
   | TmSnd
-  | TmTyingTheKnot Name TermNode Environment
+  | TmTyingTheKnot Name Control Environment
   | TmEmptyKnot
-  | TmClosure Name TermNode Environment
+  | TmClosure Name Control Environment
   | TmLetrec [(Name, TermNode)] TermNode
   | TmUnit
   | TmError String
@@ -66,10 +66,13 @@ data Instruction
   | InstrDiv
   | InstrPair
   | InstrIf TermNode TermNode
+  | InstrConst TermNode
+  | InstrVar TermNode
+  | InstrClosure Name Control
   deriving (Show, Eq)
 
 data Stack
-  = ClosureStack Name TermNode Environment Stack
+  = ClosureStack Name Control Environment Stack
   | ValueStack TermNode Stack
   | EmptyStack
   deriving (Show, Eq)
@@ -135,9 +138,9 @@ findFreeVars ctx t =
     TmPair t1 t2 -> findFreeVars ctx t1 <> findFreeVars ctx t2
     TmFst -> Nothing
     TmSnd -> Nothing
-    TmTyingTheKnot x t1 e -> findFreeVars ([x] ++ map fst e ++ ctx) t1
+    TmTyingTheKnot _ _ _ -> Nothing
     TmEmptyKnot -> Nothing
-    TmClosure x t1 e -> findFreeVars ([x] ++ map fst e ++ ctx) t1
+    TmClosure _ _ _ -> Nothing
     TmLetrec ts t1 -> (\x -> if x == [] then Nothing else Just x) (concat $ helperFun (map (\(x, y) -> findFreeVars ([x] ++ map fst ts ++ ctx) y) ts)) <> findFreeVars (map fst ts ++ ctx) t1
     TmUnit -> Nothing
     TmError _ -> Nothing

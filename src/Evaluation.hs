@@ -3,6 +3,11 @@ module Evaluation where
 import           Display
 import           Syntax
 
+compile :: TermNode -> Either String Control
+compile t =
+  case getTm t of
+    _ -> undefined
+
 eval1 :: SECD -> Either String SECD
 eval1 m =
   case m of
@@ -36,7 +41,7 @@ eval1 m =
         then Right (ValueStack (TermNode fi1 (TmBool True)) s, e, c, d)
         else Right (s, e, TermControl t2 c, d)
     (ValueStack (TermNode _ (TmBool b)) s, e, InstructionControl (InstrIf t1 t2) c, d) -> Right (s, e, TermControl (if b then t1 else t2) c, d)
-    (s, e, TermControl (TermNode _ (TmApp (TermNode _ TmFix) (TermNode _ (TmAbs f (TermNode _ (TmAbs x t1)))))) c, d) -> Right (ClosureStack x t1 ((f, TermNode noPos TmEmptyKnot) : e) s, e, c, d)
+    (s, e, TermControl (TermNode _ (TmApp (TermNode _ TmFix) (TermNode _ (TmAbs f (TermNode _ (TmAbs x t1)))))) c, d) -> Right (ClosureStack x (TermControl t1 EmptyControl) ((f, TermNode noPos TmEmptyKnot) : e) s, e, c, d)
     (s, e, TermControl (TermNode _ TmFix) c, d) -> Right (s, e, TermControl yCombSubst c, d)
     (s, e, TermControl v@(TermNode _ (TmVar x)) c, d) ->
       case lookup x e of
@@ -44,11 +49,11 @@ eval1 m =
         Just (TermNode _ (TmTyingTheKnot x1 t1 e')) -> Right (ClosureStack x1 t1 e' s, e, c, d)
         Just r -> Right (ValueStack r s, e, c, d)
         Nothing -> Right (ValueStack v s, e, c, d)
-    (s, e, TermControl (TermNode _ (TmAbs x t1)) c, d) -> Right (ClosureStack x t1 e s, e, c, d)
+    (s, e, TermControl (TermNode _ (TmAbs x t1)) c, d) -> Right (ClosureStack x (TermControl t1 EmptyControl) e s, e, c, d)
     (s, e, TermControl (TermNode _ (TmApp t1 t2)) c, d) -> Right (s, e, TermControl t2 (TermControl t1 (InstructionControl InstrApp c)), d)
-    (ClosureStack x t1 ((f, TermNode fi1 TmEmptyKnot) : e') (ValueStack t2 s), e, InstructionControl InstrApp c, d) -> Right (EmptyStack, (x, t2) : (f, TermNode fi1 (TmTyingTheKnot x t1 ((f, TermNode fi1 TmEmptyKnot) : e'))) : e', TermControl t1 EmptyControl, NonEmptyDump s e c d)
-    (ClosureStack x t1 e' (ValueStack t2 s), e, InstructionControl InstrApp c, d) -> Right (EmptyStack, (x, t2) : e', TermControl t1 EmptyControl, NonEmptyDump s e c d)
-    (ClosureStack x1 t1 e' (ClosureStack x2 t2 e'' s), e, InstructionControl InstrApp c, d) -> Right (EmptyStack, (x1, TermNode noPos (TmClosure x2 t2 e'')) : e', TermControl t1 EmptyControl, NonEmptyDump s e c d)
+    (ClosureStack x c' ((f, TermNode fi1 TmEmptyKnot) : e') (ValueStack t2 s), e, InstructionControl InstrApp c, d) -> Right (EmptyStack, (x, t2) : (f, TermNode fi1 (TmTyingTheKnot x c' ((f, TermNode fi1 TmEmptyKnot) : e'))) : e', c', NonEmptyDump s e c d)
+    (ClosureStack x c' e' (ValueStack t2 s), e, InstructionControl InstrApp c, d) -> Right (EmptyStack, (x, t2) : e', c', NonEmptyDump s e c d)
+    (ClosureStack x1 c' e' (ClosureStack x2 t2 e'' s), e, InstructionControl InstrApp c, d) -> Right (EmptyStack, (x1, TermNode noPos (TmClosure x2 t2 e'')) : e', c', NonEmptyDump s e c d)
     (ValueStack f (ValueStack v s), e, InstructionControl InstrApp c, d) | hasFun f v -> case applyFun f v of Just r -> Right (ValueStack r s, e, c, d); Nothing -> Left ("No instruction of arity 1 applies: " ++ showSECD m)
     (ValueStack v2 (ValueStack v1 s), e, InstructionControl i c, d) | hasFun2 i v1 v2 -> case applyFun2 i v1 v2 of Just r -> Right (ValueStack r s, e, c, d); Nothing -> Left ("No instruction of arity 2 applies: " ++ showSECD m)
     (ValueStack (TermNode _ TmFst) (ValueStack (TermNode _ (TmPair (TermNode _ (TmClosure x1 t1 e1)) _)) s), e, InstructionControl InstrApp c, d) -> Right (ClosureStack x1 t1 e1 s, e, c, d)
@@ -67,8 +72,8 @@ letrecEnvKnot :: Environment -> [(Name, Environment -> TermNode)] -> Environment
 letrecEnvKnot e ts = zip (map fst ts) (map (\x -> x (letrecEnvKnot e ts)) (map snd ts)) ++ e
 
 letrecKnot :: TermNode -> (Environment -> TermNode)
-letrecKnot (TermNode fi1 (TmAbs x t1)) e = TermNode fi1 (TmTyingTheKnot x t1 e)
-letrecKnot t _                           = t
+letrecKnot (TermNode fi1 (TmAbs x t1)) e = TermNode fi1 (TmTyingTheKnot x (TermControl t1 EmptyControl) e)
+letrecKnot t _ = t
 
 yCombSubst :: TermNode
 yCombSubst = TermNode noPos (TmAbs "f" (TermNode noPos (TmApp (TermNode noPos (TmAbs "x" (TermNode noPos (TmApp (TermNode noPos (TmVar "f")) (TermNode noPos (TmAbs "y" (TermNode noPos (TmApp (TermNode noPos (TmApp (TermNode noPos (TmVar "x")) (TermNode noPos (TmVar "x")))) (TermNode noPos (TmVar "y")))))))))) (TermNode noPos (TmAbs "x" (TermNode noPos (TmApp (TermNode noPos (TmVar "f")) (TermNode noPos (TmAbs "y" (TermNode noPos (TmApp (TermNode noPos (TmApp (TermNode noPos (TmVar "x")) (TermNode noPos (TmVar "x")))) (TermNode noPos (TmVar "y")))))))))))))
@@ -134,9 +139,9 @@ applyFun _ _ = Nothing
 type Counter = Int
 
 isDone :: SECD -> Bool
-isDone (ValueStack _ EmptyStack, [], EmptyControl, EmptyDump)       = True
-isDone (ClosureStack _ _ _ EmptyStack, [], EmptyControl, EmptyDump) = True
-isDone _                                                            = False
+isDone (ValueStack _ EmptyStack, [], EmptyControl, EmptyDump) = True
+isDone (ClosureStack _ (TermControl _ EmptyControl) _ EmptyStack, [], EmptyControl, EmptyDump) = True
+isDone _ = False
 
 eval' :: SECD -> (Counter, Either String SECD)
 eval' m = eval 0 (Right m)
