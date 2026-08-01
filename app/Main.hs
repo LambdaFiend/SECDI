@@ -632,7 +632,7 @@ printTerm m = do
     (ValueStack v EmptyStack, [], EmptyControl, EmptyDump) -> do
       liftIO $ putStrLn $ showTerm' v
       return $ Right ""
-    (ClosureStack x t1 e' EmptyStack, [], EmptyControl, EmptyDump) -> do
+    (ClosureStack x (TermControl t1 EmptyControl) e' EmptyStack, [], EmptyControl, EmptyDump) -> do
       liftIO $ putStrLn $ showTerm'' e' (TermNode noPos (TmAbs x t1))
       return $ Right ""
     (EmptyStack, [], TermControl t EmptyControl, EmptyDump) -> do
