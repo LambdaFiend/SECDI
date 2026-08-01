@@ -6,7 +6,7 @@ mutuallyRecursiveAndShortCircuitEval := letrec even x = if x == 0 || (not (odd (
 
 pairsAndFunctions := ((\x.x + 1) 3, (\x.\y.x) ())
 
-uselessBoolean := not (not True)
+uselessBoolean := not (not true)
 
 manyArguments := let fun x y z a b c = x + y + z <= a * b - c in fun 1 2 3 4 5 6
 
