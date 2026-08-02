@@ -42,9 +42,9 @@ getHelp =
           )
         : ":v <var_name1> :ev <var_name2>\n"
         : ":v <var_name1> :evn <number_of_steps> <var_name2>\n"
-        : "[:load and :l load the terms from the file at <file_path>, which are then assigned inside the file as in <var_name> := <corresponding_SECD>, and then loaded into the environment correspondingly]\n"
+        : "[:load and :l load the terms from the file at <file_path>, which are then assigned inside the file as in <var_name> := <term>, and then loaded into the environment correspondingly]\n"
         : ":l <file_path>\n"
-        : "[:loadcompile, :loadc, :lcompile and :lc load the terms from the file at <file_path>, which are then compiled and finally assigned inside the file as in <var_name> := <corresponding_SECD>, and then loaded into the environment correspondingly]\n"
+        : "[:loadcompile, :loadc, :lcompile and :lc load the terms from the file at <file_path>, which are then compiled and finally assigned inside the file as in <var_name> := <term>, and then loaded into the environment correspondingly]\n"
         : ":lc <file_path>\n"
         : "[:v? and :vars show the first page (10 environment variables) of the environment, if a number is not specified]\n"
         : ":v?\n"
