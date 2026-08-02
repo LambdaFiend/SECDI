@@ -42,8 +42,10 @@ getHelp =
           )
         : ":v <var_name1> :ev <var_name2>\n"
         : ":v <var_name1> :evn <number_of_steps> <var_name2>\n"
-        : "[:load and :l load terms from file at <file_path>, which are assigned inside the file as <var_name> := <expression>, and then loaded into the environment correspondingly]\n"
+        : "[:load and :l load the terms from the file at <file_path>, which are then assigned inside the file as in <var_name> := <corresponding_SECD>, and then loaded into the environment correspondingly]\n"
         : ":l <file_path>\n"
+        : "[:loadcompile, :loadc, :lcompile and :lc load the terms from the file at <file_path>, which are then compiled and finally assigned inside the file as in <var_name> := <corresponding_SECD>, and then loaded into the environment correspondingly]\n"
+        : ":lc <file_path>\n"
         : "[:v? and :vars show the first page (10 environment variables) of the environment, if a number is not specified]\n"
         : ":v?\n"
         : "[:v? and :vars will show the <number>'th page (containing 10 environment variables' names)]\n"
@@ -64,7 +66,7 @@ getHelp =
         : ":se <page_number>\n"
         : ":ee <page_number>\n"
         : "[Page numbers start at 1]\n"
-        : "[Programs may be executed directly in the command line; SECDI will show and then evaluate it (and show the result of the evaluation)]\n"
+        : "[Programs may be executed directly in the command line; SECDCI will show and then evaluate it (and show the result of the evaluation) and then compile it, show the compiled instructions and show the represented term and its evaluation]\n"
         : "<program>"
         : []
 
@@ -75,8 +77,8 @@ main :: IO ()
 main = do
   comml <- handleCommHistFile "command_history.txt"
   evaluate (length comml)
-  putStrLn "\nSECDI  Copyright (C) 2026  Lambda Fiend\nThis program comes with ABSOLUTELY NO WARRANTY; for details type `:gplw'.\nThis is free software, and you are welcome to redistribute it\nunder certain conditions; type `:gplc' for details.\n"
-  putStrLn "Welcome to SECD Interpreter, SECDI for short"
+  putStrLn "\nSECDCI  Copyright (C) 2026  Lambda Fiend\nThis program comes with ABSOLUTELY NO WARRANTY; for details type `:gplw'.\nThis is free software, and you are welcome to redistribute it\nunder certain conditions; type `:gplc' for details.\n"
+  putStrLn "Welcome to SECD Interpreter, SECDCI for short"
   putStrLn "Enter :? for help with commands"
   putStrLn ""
   runInputT customHaskelineSettings (main' [] (reverse (lines comml)))
@@ -84,7 +86,7 @@ main = do
 
 main' :: MainEnvironment -> CommandList -> InputT IO ()
 main' env comml = do
-  maybeCommand <- getInputLine "secdi> "
+  maybeCommand <- getInputLine "secdci> "
   let command = case maybeCommand of Just c -> c; Nothing -> ""
   let commToks = (\comm -> case comm of (x : xs) -> map toLower x : xs; [] -> []) $ words command
   env' <- case (commToks) of
@@ -150,7 +152,7 @@ main' env comml = do
       return env
     [quit] | elem quit [":q", ":quit"] -> do
       liftIO $ setSGR [SetColor Foreground Vivid Yellow]
-      liftIO $ putStrLn "Leaving secdi."
+      liftIO $ putStrLn "Leaving secdci."
       liftIO $ setSGR [Reset]
       return [("", emptySECD)]
     [move, name1, name2] | elem move [":move", ":mv", ":m"] -> do
