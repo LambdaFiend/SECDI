@@ -47,10 +47,12 @@ showTerm ctx t =
     TmSnd -> "snd"
     TmTyingTheKnot _ _ _ -> "·"
     TmEmptyKnot -> "⊥"
-    TmClosure x c1 e ->
+    TmClosure x c1@(TermControl t1 EmptyControl) e -> "(" ++ "λ" ++ x ++ "." ++ showTerm e t1 ++ ")"
+    TmClosure x c1@(InstructionControl _ _) e ->
       case showPrettyControl e (reverse (toListControl c1)) of
         (x', []) -> "(" ++ "λ" ++ x ++ "." ++ x' ++ ")"
         (x', l) -> "#" ++ "Failed to show pretty Control at TmClosure, as the remainding list was not empty: " ++ "(" ++ x' ++ ", " ++ show l ++ ")" ++ " for the control " ++ showControl ctx c1 ++ " which was converted into the list " ++ show (reverse (toListControl c1)) ++ "#"
+    TmClosure x c1 e -> "#" ++ "No pattern match for TmClosure: " ++ x ++ showControl e c1 ++ "#"
     TmLetrec ts t1 -> "(" ++ "letrec " ++ intercalate " and " (map (\(x, y) -> let (xs, y') = showLetrecArgs y in x ++ " " ++ intercalate " " xs ++ " = " ++ showTerm ctx y') ts) ++ " in " ++ showTerm ctx t1 ++ ")"
     TmUnit -> "()"
     TmControl c ->
