@@ -1,13 +1,13 @@
 cabal-version: 3.0
-name:          SECDI
-version:       0.1.0.0
-synopsis:      A SECD Interpreter.
+name:          SECDCI
+version:       0.2.0.0
+synopsis:      A SECD Compiler and Interpreter.
 
 description:
-  A SECD interpreter made for experimentation implenting functional abstract machines.
+  A SECD Compiler and Interpreter made for experimenting with implementations of functional abstract machines.
 
-homepage:     https://github.com/LambdaFiend/SECDI
-license:      BSD-3-Clause
+homepage:     https://github.com/LambdaFiend/SECDCI
+license:      GPL-3.0-only
 license-file: LICENSE
 author:       Lambda Fiend
 maintainer:   thelambdafiend@gmail.com
@@ -26,7 +26,7 @@ extra-doc-files:
 common warnings
   --ghc-options: 
 
-executable PLCI
+executable SECDCI
   import:         warnings
   main-is:        Main.hs
   hs-source-dirs: src
