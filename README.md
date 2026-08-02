@@ -1,9 +1,9 @@
-# SECDI
-**SECD** **I**nterpreter.
+# SECDCI
+**SECD** **C**ompiler and **I**nterpreter.
 
 ## Introducing
 
-An implementation of a SECD interpreter as per **Lawrence Paulson's Foundations of Functional Programming \[2022\]**.
+An implementation of a SECD Compiler and interpreter as per **Lawrence Paulson's Foundations of Functional Programming \[2022\]**.
 
 ## Running the program
 
