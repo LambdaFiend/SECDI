@@ -205,6 +205,23 @@ main' env comml = do
           liftIO $ putStrLn "Path leads to nowhere"
           liftIO $ setSGR [Reset]
           return env
+    [loadcompile, file] | elem loadcompile [":loadcompile", ":loadc", ":lcompile", ":lc"] -> do
+      fileExists <- liftIO $ doesFileExist ("programs/" ++ file)
+      if fileExists
+        then do
+          txt <- liftIO $ readFile ("programs/" ++ file)
+          let comms = simplyParseCommands' $ words txt
+          asts <- getMultipleASTsFromTerms'' comms
+          let env' = foldr deleteByFstEnv env (map fst asts)
+          liftIO $ setSGR [SetColor Foreground Vivid Green]
+          liftIO $ putStrLn $ "Loaded a total of " ++ (show $ length comms) ++ " environment variables"
+          liftIO $ setSGR [Reset]
+          return $ asts ++ env'
+        else do
+          liftIO $ setSGR [SetColor Foreground Vivid Red]
+          liftIO $ putStrLn "Path leads to nowhere"
+          liftIO $ setSGR [Reset]
+          return env
     [var, name] | elem var [":var", ":v", ":assign", ":a"] -> do
       txt <- liftIO getTxtFromInput
       term <- getTermFromAST txt
@@ -294,9 +311,15 @@ main' env comml = do
       return env
     ws -> do
       term <- getTermFromAST command
-      case term of
-        Left e -> return env
-        Right term' -> do
+      termComp <- getTermFromAST' command
+      case (term, termComp) of
+        (Left _, Left _) -> return env
+        (Left _, Right termComp') -> return env
+        (Right term', Left _) -> return env
+        (Right term', Right termComp') -> do
+          liftIO $ setSGR [SetColor Foreground Vivid Yellow]
+          liftIO $ putStrLn "Interpretation:"
+          liftIO $ setSGR [Reset]
           liftIO $ setSGR [SetColor Foreground Vivid Yellow]
           liftIO $ putStrLn "Showing:"
           liftIO $ setSGR [Reset]
@@ -306,6 +329,20 @@ main' env comml = do
           liftIO $ putStrLn "Evaluation:"
           liftIO $ setSGR [Reset]
           printEval term'
+          liftIO $ putStrLn ""
+          liftIO $ setSGR [SetColor Foreground Vivid Yellow]
+          liftIO $ putStrLn "Compilation:"
+          liftIO $ setSGR [Reset]
+          termComp'' <- printComp termComp'
+          liftIO $ putStrLn ""
+          liftIO $ setSGR [SetColor Foreground Vivid Yellow]
+          liftIO $ putStrLn "Compiled evaluation:"
+          liftIO $ setSGR [Reset]
+          case termComp'' of
+            Left e -> return ()
+            Right termComp''' -> do
+              printEval termComp'''
+              return ()
           return env
   if env' == [("", emptySECD)]
     then return ()
@@ -580,6 +617,65 @@ getMultipleASTsFromTerms (x : xs) = do
       return next
     Right term' -> return ((fst x, term') : next)
 
+getTermFromAST' :: String -> InputT IO (Either String TermNode)
+getTermFromAST' txt = do
+  ast <- getAST txt
+  case ast of
+    Left e -> do
+      liftIO $ setSGR [SetColor Foreground Vivid Red]
+      liftIO $ putStrLn e
+      liftIO $ setSGR [Reset]
+      return (Left "")
+    Right (TermNode _ (TmError e)) -> do
+      liftIO $ setSGR [SetColor Foreground Vivid Red]
+      liftIO $ putStrLn e
+      liftIO $ setSGR [Reset]
+      return (Left "")
+    Right t ->
+      case findFreeVars [] t of
+        Just xs -> do
+          liftIO $ setSGR [SetColor Foreground Vivid Red]
+          liftIO $ putStrLn ("Free variables found in the given term:\n" ++ show xs)
+          liftIO $ setSGR [Reset]
+          return (Left "")
+        Nothing -> return (Right t)
+
+getMultipleASTsFromTerms' :: [(String, String)] -> InputT IO [(String, TermNode)]
+getMultipleASTsFromTerms' [] = return []
+getMultipleASTsFromTerms' (x : xs) = do
+  term <- getTermFromAST' $ snd x
+  next <- getMultipleASTsFromTerms' xs
+  case term of
+    Left e -> do
+      liftIO $ putStr "for environment variable: "
+      liftIO $ setSGR [SetColor Foreground Vivid Red]
+      liftIO $ putStrLn $ fst x
+      liftIO $ setSGR [Reset]
+      return next
+    Right term' -> return ((fst x, term') : next)
+
+getMultipleASTsFromTerms'' :: [(String, String)] -> InputT IO [(String, SECD)]
+getMultipleASTsFromTerms'' [] = return []
+getMultipleASTsFromTerms'' (x : xs) = do
+  term <- getTermFromAST' $ snd x
+  next <- getMultipleASTsFromTerms'' xs
+  case term of
+    Left e -> do
+      liftIO $ putStr "for environment variable: "
+      liftIO $ setSGR [SetColor Foreground Vivid Red]
+      liftIO $ putStrLn $ fst x
+      liftIO $ setSGR [Reset]
+      return next
+    Right term' -> do
+      case compile term' of
+        Left e -> do
+          liftIO $ putStr "for environment variable: "
+          liftIO $ setSGR [SetColor Foreground Vivid Red]
+          liftIO $ putStrLn $ fst x
+          liftIO $ setSGR [Reset]
+          return next
+        Right c -> return ((fst x, (EmptyStack, [], c, EmptyDump)) : next)
+
 printEval :: SECD -> InputT IO (Either String SECD)
 printEval ast = do
   ast' <-
@@ -635,6 +731,9 @@ printTerm m = do
     (ClosureStack x (TermControl t1 EmptyControl) e' EmptyStack, [], EmptyControl, EmptyDump) -> do
       liftIO $ putStrLn $ showTerm'' e' (TermNode noPos (TmAbs x t1))
       return $ Right ""
+    (ClosureStack x c e' EmptyStack, [], EmptyControl, EmptyDump) -> do
+      liftIO $ putStrLn $ showTerm'' e' (TermNode noPos (TmAbs x (TermNode noPos (TmControl c))))
+      return $ Right ""
     (EmptyStack, [], TermControl t EmptyControl, EmptyDump) -> do
       liftIO $ putStrLn $ showTerm' t
       return $ Right ""
@@ -654,3 +753,26 @@ printSECD m = do
     Right m' -> do
       liftIO $ putStrLn $ showSECD m'
       return $ Right ""
+
+printComp :: TermNode -> InputT IO (Either String SECD)
+printComp ast = do
+  ast' <-
+    case compile ast of
+      Left e -> do
+        liftIO $ putStrLn e
+        liftIO $ setSGR [SetColor Foreground Vivid Red]
+        liftIO $ putStrLn "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
+        liftIO $ setSGR [Reset]
+        return (Left "")
+      Right m -> do
+        liftIO $ setSGR [SetColor Foreground Vivid Green]
+        liftIO $ putStrLn $ "The given term compiled to the following instructions:"
+        liftIO $ setSGR [Reset]
+        liftIO $ putStrLn $ ("[" ++ showControl [] m ++ "]")
+        liftIO $ setSGR [SetColor Foreground Vivid Yellow]
+        liftIO $ putStrLn ""
+        liftIO $ putStrLn $ "Compiled showing:"
+        liftIO $ setSGR [Reset]
+        liftIO $ putStrLn $ showTerm' (TermNode noPos (TmControl m))
+        return (Right (EmptyStack, [], m, EmptyDump))
+  return ast'
