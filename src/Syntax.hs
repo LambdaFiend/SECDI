@@ -21,7 +21,6 @@ data Term
   | TmAbs Name TermNode
   | TmApp TermNode TermNode
   | TmIf TermNode TermNode TermNode
-  | TmFix
   | TmAnd TermNode TermNode
   | TmOr TermNode TermNode
   | TmEq TermNode TermNode
@@ -37,14 +36,16 @@ data Term
   | TmNot
   | TmInt Int
   | TmBool Bool
+  | TmUnit
   | TmPair TermNode TermNode
   | TmFst
   | TmSnd
+  | TmFix
+  | TmLetrec [(Name, TermNode)] TermNode
   | TmTyingTheKnot Name Control Environment
   | TmEmptyKnot
   | TmClosure Name Control Environment
-  | TmLetrec [(Name, TermNode)] TermNode
-  | TmUnit
+  | TmControl Control
   | TmError String
   deriving (Eq, Show)
 
@@ -52,8 +53,8 @@ type SECD = (Stack, Environment, Control, Dump)
 
 data Instruction
   = InstrApp
-  | InstrAnd TermNode
-  | InstrOr TermNode
+  | InstrAnd Control
+  | InstrOr Control
   | InstrEq
   | InstrNE
   | InstrLT
@@ -65,10 +66,17 @@ data Instruction
   | InstrMult
   | InstrDiv
   | InstrPair
-  | InstrIf TermNode TermNode
-  | InstrConst TermNode
-  | InstrVar TermNode
+  | InstrIf Control Control
+  | InstrConstInt Int
+  | InstrConstBool Bool
+  | InstrConstUnit
+  | InstrConstFst
+  | InstrConstSnd
+  | InstrConstNot
+  | InstrVar Name
   | InstrClosure Name Control
+  | InstrKnot Name Name Control
+  | InstrLetrec [(Name, (Control, Maybe Name))] Control
   deriving (Show, Eq)
 
 data Stack
@@ -143,8 +151,20 @@ findFreeVars ctx t =
     TmClosure _ _ _ -> Nothing
     TmLetrec ts t1 -> (\x -> if x == [] then Nothing else Just x) (concat $ helperFun (map (\(x, y) -> findFreeVars ([x] ++ map fst ts ++ ctx) y) ts)) <> findFreeVars (map fst ts ++ ctx) t1
     TmUnit -> Nothing
+    TmControl _ -> Nothing
     TmError _ -> Nothing
   where
     helperFun []             = []
     helperFun (Just x : xs)  = x : helperFun xs
     helperFun (Nothing : xs) = helperFun xs
+
+appendControl :: Control -> Control -> Control
+appendControl EmptyControl c2 = c2
+appendControl (TermControl t c1) c2 = TermControl t (appendControl c1 c2)
+appendControl (InstructionControl i c1) c2 = InstructionControl i (appendControl c1 c2)
+
+isConst :: TermNode -> Bool
+isConst (TermNode _ (TmInt _))  = True
+isConst (TermNode _ (TmBool _)) = True
+isConst (TermNode _ TmUnit)     = True
+isConst _                       = False
