@@ -135,6 +135,7 @@ showPrettyControl ctx (InstrKnot f x c1 : is) =
 showPrettyControl ctx (InstrLetrec xtx c1 : is) =
   let (x1, _) = showPrettyControl ctx (reverse (toListControl c1))
    in ("(" ++ "letrec " ++ intercalate " and " (map (showPrettyControlLetrec ctx) xtx) ++ " in " ++ x1 ++ ")", is)
+showPrettyControl _ is = ("#During show pretty Control, there was a pattern match failure, somehow. Considering that the term managed to compile, this shouldn't have happened#", is)
 
 showPrettyControlLetrec :: Environment -> (Name, (Control, Maybe Name)) -> String
 showPrettyControlLetrec ctx (x1, (c2, Nothing)) =
