@@ -58,6 +58,35 @@ Functions are treated as values.
 
 Some (10) examples can be found within programs/default_tests.txt.
 
+## REPL's Commands
+
+Most of the commands are simple and related in purpose. The table is dense because there are multiple configurations for the same thing. It was not well thought out, but serves its purpose. I hope this was not too much of a hurdle.
+
+| Command(s) | Usage | Description |
+|------------|-------|------------|
+| *(All commands)* | — | Command names (the first token of the command) are not case sensitive. |
+| :var, :v, :assign, :a | :v \<var_name\> | Assign a written term to <var_name>. |
+| :help, :h, :? | :h | Display information regarding the commands. |
+| :show, :sh, :s | :s \<var_name\> | Show the term assigned to <var_name>. |
+| :v, :var, :a, :assign | :v <var_name1> | Evaluate from the current environment (given <var_name2>) and store into <var_name1>. |
+| :v, :var, :a, :assign | :v <var_name1> | Evaluate n-steps from the current environment and store into <var_name1>. |
+| :eval, :ev, :e | :e \<var_name\> | Fully evaluate the machine assigned to <var_name>. |
+| :evaln, :evn, :en | :en <number_of_steps> <var_name> | Evaluate (<number_of_steps>) n-steps the machine assigned to <var_name>. |
+| :load, :l | :l \<file_path\> | Load the terms from the file at <file_path>, assigned as `<var_name> := <term>` which are then loaded into the environment as SECD machines. |
+| :loadcompile, :loadc, :lcompile, :lc | :lc \<file_path\> | Load the terms from the file at <file_path>, assigned as in `<var_name> := <term>`, which are then compiled and loaded into the environment as SECD machines. |
+| :ee, :eenv, :evalenv | :evalenv | Attempt to evaluate all variables in the environment. |
+| :v?, :vars | :v? | Show the first page (10 environment variables) if a number is not specified. |
+| :v?, :vars | :v? \<number\> | Show the <number>'th page (containing 10 environment variables' names). |
+| :m, :mv, :move | :mv \<var_name1\> \<var_name2\> | Store the contents of <var_name2> into <var_name1>. |
+| :q, :quit | :q | Close the REPL. |
+| :c, :ce, :cenv, :clear, :clearenv | :c | Clear the environment (no variables accessible until new ones are added). |
+| :av?, :allvars | :av? | Show all variables in the environment. |
+| :se, :senv, :showe, :showenv | :se | Show the environment. |
+| :se, :senv, :showe, :showenv | :se \<page_number\> | Show a specific environment page. |
+| :ee, :eenv, :evalenv | :ee \<page_number\> | Evaluate a specific environment page. |
+| \<program\> | \<program\> | Shows and evaluates the given program/term/machine, and then compiles it and shows and evaluates. |
+| *(Environment pages)* | — | Page numbers start at 1. |
+
 ## Reporting issues
 
 Do not forget to report any bugs. Contact me, otherwise you can create a new issue on this repository. Thanks!
