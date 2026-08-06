@@ -29,6 +29,8 @@ getHelp =
         : "[:var, :v, :assign and :a assign a written term to <var_name>]\n"
         : ":v <var_name>\n"
         : "[:eval, :ev and :e fully evaluate the term from <var_name>]\n"
+        : "[:varcompile, :varc, :vcompile, :vc, :assignc, :assigncompile, :acompile and :ac assign the compilation of a written term to <var_name>]\n"
+        : ":v <var_name>\n"
         : ":e <var_name>\n"
         : "[:evaln, :evn and :en evaluate (<number_of_steps>) n-steps the term from <var_name>]\n"
         : ":en <number_of_steps> <var_name>\n"
@@ -227,6 +229,17 @@ main' env comml = do
     [var, name] | elem var [":var", ":v", ":assign", ":a"] -> do
       txt <- liftIO getTxtFromInput
       term <- getTermFromAST txt
+      case term of
+        Left e -> return env
+        Right term' -> do
+          let env' = deleteByFstEnv name env
+          liftIO $ setSGR [SetColor Foreground Vivid Green]
+          liftIO $ putStrLn "Variable assigned"
+          liftIO $ setSGR [Reset]
+          return ((name, term') : env')
+    [varcompile, name] | elem varcompile [":varcompile", ":vc", ":varc", ":vcompile", ":acompile", ":assignc", ":assigncompile", ":ac"] -> do
+      txt <- liftIO getTxtFromInput
+      term <- getTermFromAST'' txt
       case term of
         Left e -> return env
         Right term' -> do
@@ -655,6 +668,36 @@ getMultipleASTsFromTerms' (x : xs) = do
       liftIO $ setSGR [Reset]
       return next
     Right term' -> return ((fst x, term') : next)
+
+getTermFromAST'' :: String -> InputT IO (Either String SECD)
+getTermFromAST'' txt = do
+  ast <- getAST txt
+  case ast of
+    Left e -> do
+      liftIO $ setSGR [SetColor Foreground Vivid Red]
+      liftIO $ putStrLn e
+      liftIO $ setSGR [Reset]
+      return (Left "")
+    Right (TermNode _ (TmError e)) -> do
+      liftIO $ setSGR [SetColor Foreground Vivid Red]
+      liftIO $ putStrLn e
+      liftIO $ setSGR [Reset]
+      return (Left "")
+    Right t ->
+      case findFreeVars [] t of
+        Just xs -> do
+          liftIO $ setSGR [SetColor Foreground Vivid Red]
+          liftIO $ putStrLn ("Free variables found in the given term:\n" ++ show xs)
+          liftIO $ setSGR [Reset]
+          return (Left "")
+        Nothing -> do
+          case compile t of
+            Left e -> do
+              liftIO $ setSGR [SetColor Foreground Vivid Red]
+              liftIO $ putStrLn e
+              liftIO $ setSGR [Reset]
+              return (Left "")
+            Right c -> return (Right (EmptyStack, [], c, EmptyDump))
 
 getMultipleASTsFromTerms'' :: [(String, String)] -> InputT IO [(String, SECD)]
 getMultipleASTsFromTerms'' [] = return []
