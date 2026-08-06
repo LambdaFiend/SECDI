@@ -62,9 +62,9 @@ If : if Term then Term else Term { TermNode (tokenPos $1) (TmIf $2 $4 $6) }
 
 Let
   : let NamePattern1 "=" Term in Term              { TermNode (tokenPos $1) (TmApp ($2 $6) $4) }
-  | let NamePattern1 LetMany "=" Term in Term      { TermNode (tokenPos $1) (TmApp ($2 $7) ($3 $5)) }
+  | let Name LetMany "=" Term in Term      { TermNode (tokenPos $1) (TmApp (TermNode (tokenPos $1) (TmAbs (snd $2) $7)) ($3 $5)) }
   | LogicOp where NamePattern1 "=" Term            { TermNode (tokenPos $2) (TmApp ($3 $1) $5) }
-  | LogicOp where NamePattern1 LetMany "=" Term    { TermNode (tokenPos $2) (TmApp ($3 $1) ($4 $6)) }
+  | LogicOp where Name LetMany "=" Term    { TermNode (tokenPos $2) (TmApp (TermNode (tokenPos $2) (TmAbs (snd $3) $1)) ($4 $6)) }
   | LogicOp whererec Name "=" Term         { TermNode (tokenPos $2) (TmApp (TermNode (tokenPos $4) (TmAbs (snd $3) $1)) (TermNode (tokenPos $4) (TmApp (TermNode (tokenPos $4) TmFix) (TermNode (tokenPos $4) (TmAbs (snd $3) $5))))) }
   | LogicOp whererec Name LetMany "=" Term { TermNode (tokenPos $2) (TmApp (TermNode (tokenPos $5) (TmAbs (snd $3) $1)) (TermNode (tokenPos $5) (TmApp (TermNode (tokenPos $5) TmFix) (TermNode (tokenPos $5) (TmAbs (snd $3) ($4 $6)))))) }
 
