@@ -66,10 +66,11 @@ Most of the commands are simple and related in purpose. The table is dense becau
 |------------|-------|------------|
 | *(All commands)* | — | Command names (the first token of the command) are not case sensitive. |
 | :var, :v, :assign, :a | :v \<var_name\> | Assign a written term to <var_name>. |
+| :vc, :varc, :varcompile, :vcompile, :ac, :acompile, :assignc, :assigncompile | :v <var_name1> | Assign a written term to <var_name> after compiling it. |
 | :help, :h, :? | :h | Display information regarding the commands. |
 | :show, :sh, :s | :s \<var_name\> | Show the term assigned to <var_name>. |
-| :v, :var, :a, :assign | :v <var_name1> | Evaluate from the current environment (given <var_name2>) and store into <var_name1>. |
-| :v, :var, :a, :assign | :v <var_name1> | Evaluate n-steps from the current environment and store into <var_name1>. |
+| :v, :var, :a, :assign | :v <var_name1> :e <var_name2> | Evaluate from the current environment (given <var_name2>) and store into <var_name1>. |
+| :v, :var, :a, :assign | :v <var_name1> :e <number_of_steps> <var_name2> | Evaluate n-steps from the current environment the contents of <var_name2> and store into <var_name1>. |
 | :eval, :ev, :e | :e \<var_name\> | Fully evaluate the machine assigned to <var_name>. |
 | :evaln, :evn, :en | :en <number_of_steps> <var_name> | Evaluate (<number_of_steps>) n-steps the machine assigned to <var_name>. |
 | :load, :l | :l \<file_path\> | Load the terms from the file at <file_path>, assigned as `<var_name> := <term>` which are then loaded into the environment as SECD machines. |
